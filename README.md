@@ -11,8 +11,12 @@ Created by: David Huynh
 - [Prepare](#prepare)
 - [Process](#process)
 - [Analyze](#analyze)
+  - [Initial findings](#initial-findings)
+  - [Advanced analysis](#advanced-analysis)
 - [Share](#share)
 - [Act](#act)
+  - [Conclusion](#conclusion)
+  - [Recommendations](#recommendations)
 
 # Context
 
@@ -578,21 +582,40 @@ calo_df %>%
     ##  3rd Qu.:108.00  
     ##  Max.   :948.00
 
-Initial findings:
+## Initial findings
 
-1.  jkhjkl
+**1. Data Limitations:** The data across the different tables show
+inconsistencies in the number of users. The activity tables (both daily
+and hourly) include data from 33 users, whereas the sleep data only
+contains 24 users, and the weight logging data is limited to 8 users.
 
-2.  223
+**2. Step Counts & Calories:** On average, users take 7638 steps per
+day, which is below the CDC’s recommended 10000-step goal. Additionally,
+users consume an average of 2304 calories per day, based on data from
+all 33 users.
 
-3.  ewds
+**3.Sleep Patterns:** Users spend an average of 458.5 minutes in bed
+each day, with 419.2 minutes (6.97 hours) of that time being actual
+sleep, indicating a relatively high proportion of time spent in bed not
+sleeping.
+
+**BMI and Weight Insights:** The average BMI of the women in the dataset
+is 25.19, whichp potentially places them in the “overweight” category.
+The average weight is 72.04 kg, which is contributed by possible outlier
+weight of 133.5 kg, suggesting that a few individuals with significantly
+higher weight are influencing the average.
+
+## Advanced analysis
 
 After identifying key findings from the initial analysis, we can delve
 deeper into patterns and potential concerns related to user behavior.
 This further analysis will focus on trends in activity levels, sleep
 effectiveness, highlighting any significant insights.
 
+**Question 1: What is the relationship between active time, steps vs
+calories?**
+
 ``` r
-# 0. The relationship between active time, steps vs calories?
 # Select the relevant columns
 active_level <- activity_df %>%
   select(VeryActive, FairlyActive, LightlyActive, Sedentary, Steps, Calories)
@@ -604,24 +627,19 @@ corrplot(cor_matrix, method = 'color',addCoef.col = 'grey25')
 
 ![](BellaBeat_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
-# Share
+From the correlation matrix, it is clear that the strongest correlation
+is between **VeryActive** and **Steps** (67%), followed by the
+correlation between **VeryActive** and **Calories** (62%). In contrast,
+other activity levels show only a moderate correlation with
+**Calories**, despite having a stronger correlation with **Steps**. The
+**Sedentary** period, on the other hand, exhibits a negative correlation
+with most other features, indicating an inverse relationship with
+activity and calorie consumption, though the strength of the relation is
+not very significant.
 
-# Act
-
-################################################ 
+**Question 2: What time of day are users most active?**
 
 ``` r
-## Explore key tables ##
-
-
-
-# 1. What is the average daily step count? Are users meeting the 10,000-step recommendation?
-#   Refer to previous summary
-# 2. How many hours do users sleep on average?
-#   Refer to previous summary
-
-# 3. Active levels during the day and in a week:
-# 3.1 What time of day are users most active?
 steps_by_hour <- steps_df %>%
   group_by(Hour) %>%
   summarize(mean_steps = mean(StepTotal, na.rm = TRUE)) %>%
@@ -637,14 +655,22 @@ ggplot(data = steps_by_hour) +
 
 ![](BellaBeat_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
+The distribution of average steps for each hour of the day reveals that
+activity levels begin to rise around 6 AM, steadily increasing
+throughout the day before declining until 11 PM. The peak activity
+occurs between 5 PM and 7 PM, with the highest average step count
+reaching approximately 600 steps at 6 PM.
+
+**Question 3: Are users more active on weekdays or weekends?**
+
 ``` r
-# 3.2 Are users more active on weekdays vs. weekends?
 activity_df <- mutate(activity_df, Weekday = weekdays(as.Date(activity_df$Date, format="%m/%d/%Y")))
 activity_df$Weekday <- factor(activity_df$Weekday , levels = c("Monday", "Tuesday", "Wednesday", 
                                                                "Thursday", "Friday", "Saturday", "Sunday"))
 weekly_steps <- activity_df %>%
   group_by(Weekday) %>%
   summarise(AverageSteps = mean(Steps, na.rm = TRUE))
+
 
 ggplot(weekly_steps, aes(x = Weekday, y = AverageSteps, fill = Weekday)) +
   geom_bar(stat = "identity") +
@@ -654,16 +680,26 @@ ggplot(weekly_steps, aes(x = Weekday, y = AverageSteps, fill = Weekday)) +
        y = "Average Steps") 
 ```
 
-![](BellaBeat_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](BellaBeat_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+The data reveals that users maintain relatively consistent activity
+levels throughout the weekdays, with steps ranging from about 7,400 to
+8,100 per day. Saturday, however, sees a slight increase in activity,
+with users averaging 8,153 steps, which could indicate more engagement
+in outdoor or activities in sport and exercising. Sunday shows a
+decrease in activity with 6,933 steps, marking the lowest value of the
+week.
+
+**Question 4: Do users sleep more on weekends or weekdays**
 
 ``` r
-# 3.3 Do users sleep more on weekends vs. weekdays?
 sleep_df <- mutate(sleep_df, Weekday = weekdays(as.Date(sleep_df$Date, format="%m/%d/%Y")))
 sleep_df$Weekday <- factor(sleep_df$Weekday , levels = c("Monday", "Tuesday", "Wednesday", 
                                                                "Thursday", "Friday", "Saturday", "Sunday"))
 weekly_sleep <- sleep_df %>%
   group_by(Weekday) %>%
   summarise(AverageSleep = mean(TotalMinutesAsleep, na.rm = TRUE))
+
 
 ggplot(weekly_sleep, aes(x = Weekday, y = AverageSleep, fill = Weekday)) +
   geom_bar(stat = "identity") +
@@ -673,22 +709,36 @@ ggplot(weekly_sleep, aes(x = Weekday, y = AverageSleep, fill = Weekday)) +
        y = "Average sleeping hours")
 ```
 
-![](BellaBeat_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
+![](BellaBeat_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+The data on sleeping hours shows that users generally get between 6.69
+to 7.55 hours of sleep each day, increasing towards weekends, with
+Sunday being the day with the most sleep at 7.55 hours. Interestingly,
+there appears to be a relationship between the previous day’s activity
+levels and the amount of sleep the following night. On days following
+higher activity levels users tend to sleep more, such as Wednesday (7.27
+hours of sleep after 8125 steps) and Sunday (7.55 hours of sleep after
+8153 steps). This pattern suggests that higher levels of physical
+activity might contribute to a better recovery.
+
+**Question 5: Are users with higher activity levels burning
+significantly more calories**
 
 ``` r
-# 4. Relationship:
-# 4.1 Are users with higher activity levels burning significantly more calories?
 ggplot(data = activity_df, mapping = aes(x=Steps, y=Calories)) + 
-  geom_point(color = "orange") + geom_smooth(color = "red") +
+  geom_point(color = "orange") + geom_smooth(color = "red", method = 'loess', formula='y ~ x') +
   labs(title = "Total Steps vs. Calories")
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+![](BellaBeat_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
-![](BellaBeat_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
+The daily total steps show a relatively positive relationship with the
+calories consumed on the same day, indicating that users with higher
+activity levels are likely burning more calories.
+
+**Question 6: Do people fall asleep easily when in bed?**
 
 ``` r
-# 4.2 Do people fall asleep easily when in bed?
 sleep_df <- sleep_df %>%
   mutate(sleep_eff = round(TotalMinutesAsleep / TotalTimeInBed * 100, 1))
 
@@ -697,22 +747,27 @@ hist(sleep_df$sleep_eff, breaks = 20,
      xlab = "Sleep Efficiency (%)")
 ```
 
-![](BellaBeat_files/figure-gfm/unnamed-chunk-11-5.png)<!-- -->
+![](BellaBeat_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 ggplot(data = sleep_df, mapping = aes(x=TotalTimeInBed, y=TotalMinutesAsleep)) + 
-  geom_point(color = "blue") + geom_smooth(color = "red") +
+  geom_point(color = "blue") + geom_smooth(color = "red", method = 'loess', formula='y ~ x') +
   labs(title = "Time in bed vs. Time Asleep",
        x = 'Time in bed (mins)',
        y = 'Time asleep (mins)')
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+![](BellaBeat_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
-![](BellaBeat_files/figure-gfm/unnamed-chunk-11-6.png)<!-- -->
+There is a strong positive relationship between the time spent in bed
+and the time spent sleeping. While most users enjoy good sleep with a
+sleep efficiency greater than 85%, the small number of users with lower
+efficiency suggests that sleep quality could be an area for improvement
+for some individuals.
+
+**Question 7: Do people who are more sedentary sleep better?**
 
 ``` r
-# 4.3 Do people who are more sedentary sleep better?
 # Merging these two datasets together ##
 combined_data <- merge(activity_df, sleep_df, by = c("Id", "Date"), all = FALSE)
 n_distinct(combined_data$Id)
@@ -723,7 +778,7 @@ n_distinct(combined_data$Id)
 ``` r
 ggplot(combined_data, aes(x = Sedentary, y = TotalMinutesAsleep)) +
   geom_point() +
-  geom_smooth() +
+  geom_smooth(method = 'loess', formula='y ~ x') +
   labs(
     title = "Relationship Between Sedentary Time and Time Asleep",
     x = "Sedentary Time (Minutes)",
@@ -731,6 +786,66 @@ ggplot(combined_data, aes(x = Sedentary, y = TotalMinutesAsleep)) +
   )
 ```
 
-    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+![](BellaBeat_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-![](BellaBeat_files/figure-gfm/unnamed-chunk-11-7.png)<!-- -->
+Surprisingly, increased sedentary time is associated with less time
+spent asleep. The smoothing curve of sedentary time and sleep time shows
+a decline, further suggesting that a more sedentary lifestyle could have
+negative implications for sleep quality. This could be a potential
+health concern that needs to be address.
+
+# Share
+
+Through this analysis, we were able to answer key business questions
+related to user activity, sleep patterns, and their impact on health.
+The data reveals that higher activity levels tend to correlate with
+better sleep, higher calorie burn, and overall health improvements.
+These findings directly addressed our original question about the
+effects of smart device usage, highlighting areas where Bellabeat can
+further engage its audience and promote healthier behaviors.
+
+To share these insights, PowerBI provides an ideal platform for
+visualizing and communicating the findings. Digital dashboards featuring
+trends like daily steps, calories burned, and average sleep durations
+will help stakeholders easily interpret the data. The visualizations,
+including correlation heatmaps, bar charts and scatter plots, will make
+the results accessible, ensuring the team can use this data to inform
+future marketing strategies and product improvements.
+
+# Act
+
+## Conclusion
+
+Based on the analysis, it’s clear that users who engage in higher levels
+of physical activity tend to experience better sleep quality, burn more
+calories, and show improved overall health. However, users who spend
+more time sedentary are more likely to have poorer sleep efficiency,
+indicating a potential health concern for those with sedentary
+lifestyles. The data also reveals that weekends tend to see an increase
+in activity, especially on Saturdays, while Sundays show a great
+opportunity for personal recovery.
+
+## Recommendations
+
+Bellabeat can possibly use these insights to refine its marketing and
+product strategies. The company could emphasize promoting physical
+activity during the weekdays and weekends to encourage users to remain
+active and improve their sleep quality. Targeting users with sedentary
+lifestyles could be an effective approach for marketing specific
+features of Bellabeat products that focus on increasing activity levels,
+such as reminders or tracking that highlight the benefits of an active
+lifestyle on sleep and overall health.
+
+Bellabeat should focus on designing features or campaigns that:
+
+- Encourage users to maintain a healthy balance of activity throughout
+  the week, especially on days when activity tends to drop (e.g.,
+  Sundays), by the introduction of incentives and promotions.
+- Inform users about the relationship between activity and sleep, as
+  well as exploring the impact of specific activity types (e.g.,
+  aerobic, walking, sports) on sleep efficiency.
+- Integrate personalized health insights based on users’ routine to
+  provide more targeted recommendations.
+- Gather more data to diversify the database for better coverage of
+  users’ range. Collecting long-term user data could also reveal trends
+  and help track the effectiveness of any new features or campaigns.

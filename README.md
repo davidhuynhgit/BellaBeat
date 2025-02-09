@@ -797,6 +797,7 @@ will help stakeholders easily interpret the data. The visualizations,
 including correlation heatmaps, bar charts and scatter plots, will make
 the results accessible, ensuring the team can use this data to inform
 future marketing strategies and product improvements.
+![](BellaBeat_PowerBI.jpg)<!-- -->
 
 # Act
 

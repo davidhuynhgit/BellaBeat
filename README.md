@@ -117,24 +117,10 @@ library(tidyverse)
 ``` r
 library(skimr)
 library(janitor)
-```
-
-    ## 
-    ## Attaching package: 'janitor'
-    ## 
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     chisq.test, fisher.test
-
-``` r
 library(ggplot2)
 library(dplyr)
 library(corrplot)
-```
 
-    ## corrplot 0.95 loaded
-
-``` r
 ## Load CSV files ##
 setwd("/cloud/project/database/FitabaseData2")
 daily_activity <- read.csv("dailyActivity_merged.csv")
